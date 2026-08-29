@@ -1,0 +1,18 @@
+<?php
+
+// InitiumPHP config — authoritative template shipped by initium-php-core.
+// The skeleton copies this to config/_env.php; fill in real values and keep
+// _env.php out of version control. The required set is enforced at boot by
+// \Initium\Config::validate().
+
+define('SITE_NAME', 'xxxxxx');
+define('SITE_URL', 'https://www.example.com/'); // trailing slash required
+define('DB_NAME', 'xxxxx');
+define('DB_SERVER', 'xxxxx');
+define('DB_USER', 'xxxxx');
+define('DB_PASS', 'xxxxx');
+define('EMAIL_MAILGUN_KEY', 'xxxxxx');
+define('EMAIL_MAILGUN_DOMAIN', 'xxxxx');
+define('EMAIL_SUPPORT_ADDRESS', 'support@example.com');
+define('ALLOW_SIGNUPS', 1);
+define('LOGIN_TIMEOUT', 336); // hours, 336 = 2 weeks
