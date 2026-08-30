@@ -15,7 +15,7 @@ use function FastRoute\simpleDispatcher;
  *
  *     (new Kernel(__DIR__ . '/../storage/sessions'))
  *         ->routes(require __DIR__ . '/../routes/web.php')   // app routes
- *         ->routes(\Initium\Auth\Routes::register(...))      // core auth (CODE-100)
+ *         ->routes([\Initium\Auth\Routes::class, 'register'])  // core auth routes
  *         ->run();
  *
  * Sessions are started only on a matched route — never for a 404/405 — matching
