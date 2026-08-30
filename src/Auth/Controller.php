@@ -4,6 +4,7 @@ namespace Initium\Auth;
 
 use Initium\Base;
 use Initium\Email;
+use Initium\View;
 
 /**
  * The auth request handlers, split out of the original monolithic User class.
@@ -12,7 +13,9 @@ use Initium\Email;
  * app.
  *
  * Behavior is preserved from the original: the non-enumerable signup/forgot
- * flow, ALLOW_SIGNUPS gating, cost-12 hashing, and UUID validation.
+ * flow, ALLOW_SIGNUPS gating, cost-12 hashing, and UUID validation. Templates
+ * are referenced through the "app::" folder so the app can override any of them
+ * (see Initium\View).
  */
 class Controller extends Base {
 
@@ -20,8 +23,8 @@ class Controller extends Base {
 
 	public function __construct() {
 		parent::__construct();
-		$this->templates = new \League\Plates\Engine(__DIR__ . '/../../templates');
-		$this->templates->addData(['is_logged_in' => Cred::userDetails() ? true : false], ['basic']);
+		$this->templates = View::engine();
+		$this->templates->addData(['is_logged_in' => Cred::userDetails() ? true : false], ['app::basic']);
 	}
 
 	// Where login() sends the user afterward. App-configurable via the optional
@@ -55,8 +58,8 @@ class Controller extends Base {
 	protected function send_set_password_email($email, $uuid, $reset_type, $subject) {
 		$validate_url = SITE_URL . 'password-reset/' . $uuid;
 
-		$this->templates->addData(['reset_type' => $reset_type, 'page_title' => SITE_NAME, 'reset_link' => $validate_url], ['reset_password_email']);
-		$email_html = $this->templates->render('reset_password_email');
+		$this->templates->addData(['reset_type' => $reset_type, 'page_title' => SITE_NAME, 'reset_link' => $validate_url], ['app::reset_password_email']);
+		$email_html = $this->templates->render('app::reset_password_email');
 
 		$mailer = new Email();
 		$mailer->send_mailgun($email, $subject, 'Set/Reset Password here: ' . $validate_url . "\n\n-The " . SITE_NAME . ' team', $email_html);
@@ -64,9 +67,9 @@ class Controller extends Base {
 
 	public function login_page() {
 		// just draw page
-		$this->templates->addData(['page_title' => SITE_NAME . ' Login'], ['basic']);
+		$this->templates->addData(['page_title' => SITE_NAME . ' Login'], ['app::basic']);
 
-		echo $this->templates->render('login');
+		echo $this->templates->render('app::login');
 
 	}
 
@@ -84,8 +87,8 @@ class Controller extends Base {
 		    	}
 		    }
 
-		    $this->templates->addData(['messages' => $this->get_messages()], ['basic']);
-		    $this->templates->addData(['post_content' => $_POST], ['login']);
+		    $this->templates->addData(['messages' => $this->get_messages()], ['app::basic']);
+		    $this->templates->addData(['post_content' => $_POST], ['app::login']);
 		    $this->login_page();
 		    return true;
 		}
@@ -94,8 +97,8 @@ class Controller extends Base {
 
 		if(!$cred->login($_POST['email'], $_POST['password'])) {
 			$this->add_message('error', 'Email or password incorrect.');
-			$this->templates->addData(['messages' => $this->get_messages()], ['basic']);
-		    $this->templates->addData(['post_content' => $_POST], ['login']);
+			$this->templates->addData(['messages' => $this->get_messages()], ['app::basic']);
+		    $this->templates->addData(['post_content' => $_POST], ['app::login']);
 		    $this->login_page();
 		    return true;
 		}
@@ -109,10 +112,10 @@ class Controller extends Base {
 
 		Cred::logout();
 
-		$this->templates->addData(['is_logged_in' =>false], ['basic']);
-		$this->templates->addData(['page_title' => SITE_NAME], ['basic']);
-		$this->templates->addData(['is_error' => 0, 'top_title' => "Logout Successful.", "page_message" =>"<p>You have been logged out.</p>"], ['general_message_page']);
-		echo $this->templates->render('general_message_page');
+		$this->templates->addData(['is_logged_in' =>false], ['app::basic']);
+		$this->templates->addData(['page_title' => SITE_NAME], ['app::basic']);
+		$this->templates->addData(['is_error' => 0, 'top_title' => "Logout Successful.", "page_message" =>"<p>You have been logged out.</p>"], ['app::general_message_page']);
+		echo $this->templates->render('app::general_message_page');
 
 	}
 
@@ -122,8 +125,8 @@ class Controller extends Base {
 		}
 
 		// just draw page
-		$this->templates->addData(['page_title' => SITE_NAME . ' Account Creation'], ['basic']);
-		echo $this->templates->render('create_account');
+		$this->templates->addData(['page_title' => SITE_NAME . ' Account Creation'], ['app::basic']);
+		echo $this->templates->render('app::create_account');
 
 	}
 
@@ -146,8 +149,8 @@ class Controller extends Base {
 		    	}
 		    }
 
-		    $this->templates->addData(['messages' => $this->get_messages()], ['basic']);
-		    $this->templates->addData(['post_content' => $_POST], ['create_account']);
+		    $this->templates->addData(['messages' => $this->get_messages()], ['app::basic']);
+		    $this->templates->addData(['post_content' => $_POST], ['app::create_account']);
 		    $this->create_account_page();
 		    return true;
 		}
@@ -172,15 +175,15 @@ class Controller extends Base {
 		}
 		// existing and active: send nothing, but still show the same page below
 
-		$this->templates->addData(['page_title' => SITE_NAME], ['basic']);
-		$this->templates->addData(['is_error' => 0, 'top_title' => "Created account", "page_message" =>"<p>Your account was successfully created. Please check your email for your confirmation and link to set your password.</p>"], ['general_message_page']);
-		echo $this->templates->render('general_message_page');
+		$this->templates->addData(['page_title' => SITE_NAME], ['app::basic']);
+		$this->templates->addData(['is_error' => 0, 'top_title' => "Created account", "page_message" =>"<p>Your account was successfully created. Please check your email for your confirmation and link to set your password.</p>"], ['app::general_message_page']);
+		echo $this->templates->render('app::general_message_page');
 	}
 
 	public function forgot_password_page() {
 		// just draw page
-		$this->templates->addData(['page_title' => SITE_NAME], ['basic']);
-		echo $this->templates->render('forgot_password_page');
+		$this->templates->addData(['page_title' => SITE_NAME], ['app::basic']);
+		echo $this->templates->render('app::forgot_password_page');
 
 	}
 
@@ -198,8 +201,8 @@ class Controller extends Base {
 		    	}
 		    }
 
-		    $this->templates->addData(['messages' => $this->get_messages()], ['basic']);
-		    $this->templates->addData(['post_content' => $_POST], ['forgot_password_page']);
+		    $this->templates->addData(['messages' => $this->get_messages()], ['app::basic']);
+		    $this->templates->addData(['post_content' => $_POST], ['app::forgot_password_page']);
 		    $this->forgot_password_page();
 		    return true;
 		}
@@ -219,9 +222,9 @@ class Controller extends Base {
 
 		// either way, show success-y page
 
-		$this->templates->addData(['page_title' => SITE_NAME], ['basic']);
-		$this->templates->addData(['is_error' => 0, 'top_title' => "New Password requested", "page_message" =>"<p>If your email exists in our system, you should receive an email with a password reset link soon.</p>"], ['general_message_page']);
-		echo $this->templates->render('general_message_page');
+		$this->templates->addData(['page_title' => SITE_NAME], ['app::basic']);
+		$this->templates->addData(['is_error' => 0, 'top_title' => "New Password requested", "page_message" =>"<p>If your email exists in our system, you should receive an email with a password reset link soon.</p>"], ['app::general_message_page']);
+		echo $this->templates->render('app::general_message_page');
 
 	}
 
@@ -238,9 +241,9 @@ class Controller extends Base {
 		}
 
 		// just draw page
-		$this->templates->addData(['page_title' => SITE_NAME . ' Change Password'], ['basic']);
-		$this->templates->addData(['uuid' => $vars['pass_uuid']], ['reset_password_page']);
-		echo $this->templates->render('reset_password_page');
+		$this->templates->addData(['page_title' => SITE_NAME . ' Change Password'], ['app::basic']);
+		$this->templates->addData(['uuid' => $vars['pass_uuid']], ['app::reset_password_page']);
+		echo $this->templates->render('app::reset_password_page');
 	}
 
 	public function reset_password($vars) {
@@ -262,7 +265,7 @@ class Controller extends Base {
 		    	}
 		    }
 
-		    $this->templates->addData(['messages' => $this->get_messages()], ['basic']);
+		    $this->templates->addData(['messages' => $this->get_messages()], ['app::basic']);
 		    $this->reset_password_page($vars);
 		    return true;
 		}
@@ -279,14 +282,14 @@ class Controller extends Base {
 
 			if(!$this->db->update("users",["is_active" => 1, "password" => $password, "password_reset" => ''], ["id" => $user_id])) {
 				// create user failed
-				$this->templates->addData(['messages' => $this->get_messages()], ['basic']);
+				$this->templates->addData(['messages' => $this->get_messages()], ['app::basic']);
 			    $this->reset_password_page($vars);
 			    return true;
 			}
 			// just draw gen message
-			$this->templates->addData(['page_title' => SITE_NAME], ['basic']);
-			$this->templates->addData(['is_error' => 0, 'top_title' => "Password Changed Successfully", "page_message" =>"<p>Your password was changed successfully, please proceed to login.</p>\n"], ['general_message_page']);
-			echo $this->templates->render('general_message_page');
+			$this->templates->addData(['page_title' => SITE_NAME], ['app::basic']);
+			$this->templates->addData(['is_error' => 0, 'top_title' => "Password Changed Successfully", "page_message" =>"<p>Your password was changed successfully, please proceed to login.</p>\n"], ['app::general_message_page']);
+			echo $this->templates->render('app::general_message_page');
 
 		}
 	}

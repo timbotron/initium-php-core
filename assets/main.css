@@ -1,0 +1,41 @@
+body {
+    font-family: Helvetica, Arial, sans-serif;
+}
+
+nav section {
+    margin: 0em;
+}
+
+nav section a, .login-footer a {
+    text-decoration: none;
+}
+
+section.brdr--light-gray {
+    border-left: 0em;
+    border-right: 0em;
+}
+
+header h2 {
+    margin-bottom: 0em;
+}
+section h2 {
+    margin: 0em;
+}
+
+ul.list--unstyled {
+    padding-left:0em;
+}
+
+img {
+    margin: 0.5em 0;
+}
+code {
+    background-color: #CCC;
+}
+
+@media screen and (max-width: 600px) {
+  form input, form label, message, nav section a {
+    font-size: 16px;
+    }
+
+}
