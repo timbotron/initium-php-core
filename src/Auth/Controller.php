@@ -74,6 +74,18 @@ class Controller extends Base {
 	}
 
 	public function login() {
+		$cred = new Cred();
+
+		// Brute-force throttle: refuse early (before any credential work) once
+		// this IP has too many recent failures.
+		if($cred->login_throttled()) {
+			$this->add_message('error', 'Too many failed login attempts. Please try again in a few minutes.');
+			$this->templates->addData(['messages' => $this->get_messages()], ['app::basic']);
+			$this->templates->addData(['post_content' => $_POST], ['app::login']);
+			$this->login_page();
+			return true;
+		}
+
 		$v = new \Valitron\Validator($_POST);
 		$v->rule('required', ['email', 'password']);
 		$v->rule('email', 'email');
@@ -93,9 +105,8 @@ class Controller extends Base {
 		    return true;
 		}
 
-		$cred = new Cred();
-
 		if(!$cred->login($_POST['email'], $_POST['password'])) {
+			$cred->record_failed_login($_POST['email']);
 			$this->add_message('error', 'Email or password incorrect.');
 			$this->templates->addData(['messages' => $this->get_messages()], ['app::basic']);
 		    $this->templates->addData(['post_content' => $_POST], ['app::login']);

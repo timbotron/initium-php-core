@@ -49,6 +49,8 @@ Optional:
 | Constant | Effect |
 |---|---|
 | `LOGIN_REDIRECT` | Path appended to `SITE_URL` that `login()` redirects to on success. Defaults to `logged-in-page`. |
+| `LOGIN_THROTTLE_MAX` | Failed logins allowed per IP within the window before blocking. Defaults to `10`. |
+| `LOGIN_THROTTLE_WINDOW` | Throttle window length in minutes. Defaults to `15`. |
 
 The authoritative template lives at
 [`config/_env.php.template`](config/_env.php.template); the skeleton ships a copy.
@@ -92,6 +94,12 @@ Account creation sets no password: it inserts an inactive user with a
 new password (cost 12), activates the user, and clears the UUID. Signup and
 forgot-password are deliberately non-enumerable.
 
+`login` is rate-limited per IP: failed attempts are recorded in `login_attempts`
+and, once `LOGIN_THROTTLE_MAX` failures accumulate within `LOGIN_THROTTLE_WINDOW`
+minutes, further attempts (even with the right password) are refused with a
+friendly message until the window passes. A successful login clears that IP's
+recorded attempts.
+
 ## Templates & assets (override without editing vendor)
 
 Core ships default templates (`basic` layout + all auth pages, plus a starter
@@ -108,12 +116,15 @@ core default — so an app overrides any view by dropping in a same-named file, 
 vendor edits. Default CSS lives in [`assets/`](assets); copy it into the app's web
 root (the skeleton ships it in `public/css/`).
 
-## Migration
+## Migrations
 
-One table (`users`). Import it once into your database:
+Import every file in `migrations/` (in filename order) into your database once —
+currently the `users` table and the `login_attempts` throttle table:
 
 ```bash
-mysql -u <user> -p <db> < vendor/timbotron/initium-php-core/migrations/001-migration-start.sql
+for f in vendor/timbotron/initium-php-core/migrations/*.sql; do
+    mysql -u <user> -p <db> < "$f"
+done
 ```
 
 ## Building blocks
