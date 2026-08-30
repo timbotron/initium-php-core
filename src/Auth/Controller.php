@@ -4,6 +4,7 @@ namespace Initium\Auth;
 
 use Initium\Base;
 use Initium\Email;
+use Initium\Settings;
 use Initium\View;
 
 /**
@@ -24,7 +25,10 @@ class Controller extends Base {
 	public function __construct() {
 		parent::__construct();
 		$this->templates = View::engine();
-		$this->templates->addData(['is_logged_in' => Cred::userDetails() ? true : false], ['app::basic']);
+		$this->templates->addData([
+			'is_logged_in' => Cred::userDetails() ? true : false,
+			'is_admin' => Cred::isAdmin(),
+		], ['app::basic']);
 	}
 
 	// Where login() sends the user afterward. App-configurable via the optional
@@ -131,7 +135,7 @@ class Controller extends Base {
 	}
 
 	public function create_account_page() {
-		if(!ALLOW_SIGNUPS) {
+		if(!(new Settings())->allow_signups()) {
 			$this->return_code(404);
 		}
 
@@ -142,7 +146,7 @@ class Controller extends Base {
 	}
 
 	public function create_account() {
-		if(!ALLOW_SIGNUPS) {
+		if(!(new Settings())->allow_signups()) {
 			$this->return_code(404);
 		}
 
@@ -166,25 +170,45 @@ class Controller extends Base {
 		    return true;
 		}
 
-		// validated. Non-enumerable flow: always render the same success page
-		// regardless of whether the email already exists.
+		// validated. Work out whether this signup earns a set-password uuid, then
+		// either email the link (default) or, when require_valid_email is off,
+		// send them straight to the set-password page (no Mailgun needed).
 		$email = $_POST['email'];
 		$existing = $this->db->get('users', ['id', 'is_active'], ['email' => $email]);
 
+		$uuid = null;
 		if(!$existing) {
-			// brand-new email: create the inactive user and send the set-password link
+			// brand-new email: create the inactive user
 			$uuid = $this->generate_uuid();
-			if($this->create_user($email, $uuid)) {
-				$this->send_set_password_email($email, $uuid, 'new', 'Welcome to ' . SITE_NAME);
+			if(!$this->create_user($email, $uuid)) {
+				$uuid = null; // create failed; fall through without a link
 			}
 		}
 		elseif(!$existing['is_active']) {
-			// abandoned signup: refresh the uuid and re-send, so they aren't dead-ended
+			// abandoned signup: refresh the uuid so they aren't dead-ended
 			$uuid = $this->generate_uuid();
 			$this->db->update('users', ['password_reset' => $uuid], ['id' => $existing['id']]);
+		}
+		// existing and active: $uuid stays null — never reset an active account
+		// from the signup form (that would be account takeover).
+
+		if(!(new Settings())->require_valid_email()) {
+			// No-Mailgun mode: skip the email round-trip.
+			if($uuid !== null) {
+				// new/abandoned user sets their password immediately
+				header('Location: ' . SITE_URL . 'password-reset/' . $uuid);
+				exit;
+			}
+			// active account (or a failed create): don't reveal or reset — to login
+			header('Location: ' . SITE_URL . 'login');
+			exit;
+		}
+
+		// Email mode (default, non-enumerable): email the link when there is one,
+		// then always render the same success page regardless of the email's state.
+		if($uuid !== null) {
 			$this->send_set_password_email($email, $uuid, 'new', 'Welcome to ' . SITE_NAME);
 		}
-		// existing and active: send nothing, but still show the same page below
 
 		$this->templates->addData(['page_title' => SITE_NAME], ['app::basic']);
 		$this->templates->addData(['is_error' => 0, 'top_title' => "Created account", "page_message" =>"<p>Your account was successfully created. Please check your email for your confirmation and link to set your password.</p>"], ['app::general_message_page']);

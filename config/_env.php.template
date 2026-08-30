@@ -14,5 +14,10 @@ define('DB_PASS', 'xxxxx');
 define('EMAIL_MAILGUN_KEY', 'xxxxxx');
 define('EMAIL_MAILGUN_DOMAIN', 'xxxxx');
 define('EMAIL_SUPPORT_ADDRESS', 'support@example.com');
-define('ALLOW_SIGNUPS', 1);
+define('ALLOW_SIGNUPS', 1); // initial default; the admin area can override this at runtime
 define('LOGIN_TIMEOUT', 336); // hours, 336 = 2 weeks
+
+// Optional. A logged-in user whose email matches becomes an admin (in addition
+// to anyone with users.is_admin = 1), a config-only way to bootstrap the first
+// admin without touching the database. Leave undefined to rely on the flag only.
+// define('ADMIN_EMAIL', 'you@example.com');

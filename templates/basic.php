@@ -13,6 +13,9 @@
             <a class="flt--left" href="<?= SITE_URL ?>">Home</a>
             <?php if($is_logged_in): ?>
             <a class="flt--left mx2" href="<?= SITE_URL ?>logged-in-page">Internal</a>
+            <?php if($is_admin ?? false): ?>
+            <a class="flt--left mx2" href="<?= SITE_URL ?>admin">Admin</a>
+            <?php endif;?>
             <a class="flt--right" href="<?= SITE_URL ?>logout">Logout</a>
             <?php else:?>
             <a class="flt--right" href="<?= SITE_URL ?>login">Login</a>

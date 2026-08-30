@@ -20,7 +20,7 @@ class Cred extends Base {
 		}
 
 		// password at least is sensical, lets look up user
-		$user = $this->db->get("users", ['id','email','password'], ['is_active' => 1, 'email'=> $email]);
+		$user = $this->db->get("users", ['id','email','password','is_admin'], ['is_active' => 1, 'email'=> $email]);
 
 		if($user && password_verify($password, $user['password'])) {
 			// login good. Clear this IP's failed-attempt history and record login time
@@ -33,6 +33,7 @@ class Cred extends Base {
 			$_SESSION['user_data'] = [
 				'user_id' => $user['id'],
 				'email' => $user['email'],
+				'is_admin' => (int) $user['is_admin'],
 			];
 
 			return true;
@@ -48,6 +49,20 @@ class Cred extends Base {
 		session_unset();
 		session_destroy();
 		return true;
+	}
+
+	// A logged-in user is an admin when their users.is_admin flag is set, or
+	// when their email matches the optional ADMIN_EMAIL config constant (a
+	// config-only bootstrap admin that needs no DB change).
+	public static function isAdmin(): bool {
+		$user = self::userDetails();
+		if(!$user) {
+			return false;
+		}
+		if(!empty($user['is_admin'])) {
+			return true;
+		}
+		return defined('ADMIN_EMAIL') && ADMIN_EMAIL !== '' && $user['email'] === ADMIN_EMAIL;
 	}
 
 	// --- brute-force throttle -------------------------------------------------

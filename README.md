@@ -51,6 +51,10 @@ Optional:
 | `LOGIN_REDIRECT` | Path appended to `SITE_URL` that `login()` redirects to on success. Defaults to `logged-in-page`. |
 | `LOGIN_THROTTLE_MAX` | Failed logins allowed per IP within the window before blocking. Defaults to `10`. |
 | `LOGIN_THROTTLE_WINDOW` | Throttle window length in minutes. Defaults to `15`. |
+| `ADMIN_EMAIL` | A logged-in user whose email matches becomes an admin (see Admin area). Bootstraps the first admin with no DB change. |
+
+`ALLOW_SIGNUPS` is the *initial* value for the runtime `allow_signups` setting; once
+an admin saves settings, the DB value wins (see Admin area).
 
 The authoritative template lives at
 [`config/_env.php.template`](config/_env.php.template); the skeleton ships a copy.
@@ -100,6 +104,29 @@ minutes, further attempts (even with the right password) are refused with a
 friendly message until the window passes. A successful login clears that IP's
 recorded attempts.
 
+## Admin area
+
+A tiny built-in settings area at `/admin`, mounted like the auth routes:
+
+```php
+$kernel->routes([\Initium\Admin\Routes::class, 'register']);
+```
+
+It exposes two runtime toggles, stored in the `settings` key/value table
+(`Initium\Settings`) so they can change without editing config:
+
+- **Allow new sign-ups** — backs the `create-account` route (a matching runtime
+  setting for what `ALLOW_SIGNUPS` seeds); off = the route 404s.
+- **Require valid email** — on (default): sign-ups are emailed a set-password
+  link via Mailgun. Off: the email round-trip is skipped and new users are sent
+  straight to the set-password page — for installs without Mailgun. (An existing
+  *active* account is never redirected to reset from the signup form.)
+
+Reads fall back to code defaults when no row exists, so behavior is unchanged
+until an admin saves. Access is gated by `Cred::isAdmin()`: true when the
+logged-in user's `users.is_admin` flag is set **or** their email matches the
+optional `ADMIN_EMAIL` constant. Non-admins get a 404.
+
 ## Templates & assets (override without editing vendor)
 
 Core ships default templates (`basic` layout + all auth pages, plus a starter
@@ -132,7 +159,8 @@ done
 - `Initium\Base` — `$this->db` (Medoo), the flash-style message queue, `return_code`, `isUUID`, `generate_uuid`.
 - `Initium\DB` — Medoo singleton (clone/unserialize guarded); reads `DB_*`.
 - `Initium\Email` — Mailgun sender over curl; reads `EMAIL_*` and `SITE_NAME`.
-- `Initium\Auth\Cred` — session/auth authority: `userDetails`, `login` (regenerates the session id + stamps `last_login`), `logout`.
+- `Initium\Auth\Cred` — session/auth authority: `userDetails`, `login` (regenerates the session id + stamps `last_login`), `logout`, `isAdmin`.
+- `Initium\Settings` — key/value settings store (`get`/`set` + typed `allow_signups`/`require_valid_email`), backing the admin area.
 - `Initium\Support` helpers — `time_elapsed_string`, global via composer `files` autoload.
 
 ## Migrating from the old monolith
