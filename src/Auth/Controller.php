@@ -72,6 +72,9 @@ class Controller extends Base {
 	public function login_page() {
 		// just draw page
 		$this->templates->addData(['page_title' => SITE_NAME . ' Login'], ['app::basic']);
+		// drive the Create Account link off the runtime setting, not the constant,
+		// so it hides when an admin has turned signups off (route would 404)
+		$this->templates->addData(['allow_signups' => (new Settings())->allow_signups()], ['app::login']);
 
 		echo $this->templates->render('app::login');
 

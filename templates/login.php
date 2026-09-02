@@ -15,7 +15,7 @@
 
         <div class="login-footer">
             <a class="flt--left" href="<?= SITE_URL ?>password-forgot">Forgot Password</a>
-            <?php if(ALLOW_SIGNUPS): ?>
+            <?php if($allow_signups ?? false): ?>
                     <a class="flt--right" href="<?= SITE_URL ?>create-account">Create Account</a>
 
             <?php endif; ?>
