@@ -51,6 +51,7 @@ Optional:
 | `LOGIN_REDIRECT` | Path appended to `SITE_URL` that `login()` redirects to on success. Defaults to `logged-in-page`. |
 | `LOGIN_THROTTLE_MAX` | Failed logins allowed per IP within the window before blocking. Defaults to `10`. |
 | `LOGIN_THROTTLE_WINDOW` | Throttle window length in minutes. Defaults to `15`. |
+| `PASSWORD_RESET_TTL` | How long a set/reset-password link stays valid, in **hours**. Defaults to `24`. Requires the `004` migration. |
 | `ADMIN_EMAIL` | A logged-in user whose email matches becomes an admin (see Admin area). Bootstraps the first admin with no DB change. |
 | `TRUST_FORWARDED` | Set truthy **only** behind a trusted reverse proxy (e.g. the Caddy stack). The login throttle then keys on the real client IP from `X-Forwarded-For` (right-most hop) instead of the proxy's address, and the session cookie's `Secure` flag honors `X-Forwarded-Proto`. Assumes one proxy directly in front; leave off for direct deployments (the headers are client-spoofable there). |
 | `FORCE_SECURE_COOKIES` | Force the session cookie's `Secure` flag on unconditionally. Use for installs always behind TLS where neither `$_SERVER['HTTPS']` nor a trusted `X-Forwarded-Proto` is reliably set. Leave off for local HTTP dev. |
@@ -152,13 +153,19 @@ root (the skeleton ships it in `public/css/`).
 ## Migrations
 
 Import every file in `migrations/` (in filename order) into your database once —
-currently the `users` table and the `login_attempts` throttle table:
+the `users` table, the `login_attempts` throttle table, the `settings` store +
+admin flag, and the reset-token expiry column:
 
 ```bash
 for f in vendor/timbotron/initium-php-core/migrations/*.sql; do
     mysql -u <user> -p <db> < "$f"
 done
 ```
+
+They are incremental: an existing install re-runs the loop after an upgrade to
+pick up new files (e.g. `004-password-reset-expiry.sql` adds
+`users.password_reset_expires`; already-applied migrations are no-ops or error
+harmlessly).
 
 ## Building blocks
 

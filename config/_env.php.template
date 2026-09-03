@@ -35,6 +35,10 @@ define('LOGIN_TIMEOUT', 336); // hours, 336 = 2 weeks
 // trusted X-Forwarded-Proto is reliably set. Leave off for local HTTP dev.
 // define('FORCE_SECURE_COOKIES', true);
 
+// Optional. How long a set/reset-password link stays valid, in hours (default
+// 24). Requires the 004-password-reset-expiry migration.
+// define('PASSWORD_RESET_TTL', 24);
+
 // Optional. Permit no-email signup (the admin "require valid email" toggle can
 // then be turned off, sending new users straight to the set-password page with
 // no Mailgun round-trip). This mode is ENUMERABLE BY DESIGN: it must show a new

@@ -39,6 +39,13 @@ class Controller extends Base {
 		return SITE_URL . $path;
 	}
 
+	// Expiry timestamp for a freshly issued password_reset token. Window is
+	// PASSWORD_RESET_TTL hours (default 24).
+	protected function reset_expiry(): string {
+		$ttl = defined('PASSWORD_RESET_TTL') ? PASSWORD_RESET_TTL : 24;
+		return date('Y-m-d H:i:s', time() + $ttl * 3600);
+	}
+
 	// create user
 	public function create_user($email, $uuid) {
 
@@ -46,6 +53,7 @@ class Controller extends Base {
 	    	"email" => $email,
 	    	"created_at" => date("Y-m-d"),
 	    	"password_reset" => $uuid,
+	    	"password_reset_expires" => $this->reset_expiry(),
 	    	"is_active" => 0,
 	    ]);
 
@@ -194,7 +202,7 @@ class Controller extends Base {
 		elseif(!$existing['is_active']) {
 			// abandoned signup: refresh the uuid so they aren't dead-ended
 			$uuid = $this->generate_uuid();
-			$this->db->update('users', ['password_reset' => $uuid], ['id' => $existing['id']]);
+			$this->db->update('users', ['password_reset' => $uuid, 'password_reset_expires' => $this->reset_expiry()], ['id' => $existing['id']]);
 		}
 		// existing and active: $uuid stays null — never reset an active account
 		// from the signup form (that would be account takeover).
@@ -258,7 +266,7 @@ class Controller extends Base {
 			$uuid = $this->generate_uuid();
 
 			// update user record to have new uuid
-			$this->db->update("users", ['password_reset' => $uuid], ['id' => $user_id]);
+			$this->db->update("users", ['password_reset' => $uuid, 'password_reset_expires' => $this->reset_expiry()], ['id' => $user_id]);
 
 			$this->send_set_password_email($_POST['email'], $uuid, 'same', 'Reset Password for ' . SITE_NAME);
 		}
@@ -278,9 +286,10 @@ class Controller extends Base {
 			$this->return_code(400);
 		}
 
-		// look up and see if uuid exists
-		if(!$this->db->has('users',['password_reset'=>$vars['pass_uuid']])) {
-			// UUID not found, 400 it
+		// look up and see if uuid exists and has not expired (NULL expiry fails
+		// the >= check, so legacy/cleared tokens are rejected too)
+		if(!$this->db->has('users',['password_reset'=>$vars['pass_uuid'], 'password_reset_expires[>=]' => date('Y-m-d H:i:s')])) {
+			// UUID not found or expired, 400 it
 			$this->return_code(400);
 		}
 
@@ -316,17 +325,17 @@ class Controller extends Base {
 		    return true;
 		}
 
-		// look up and see if uuid exists
-		$user_id = $this->db->get('users','id', ['password_reset'=>$vars['pass_uuid']]);
+		// look up and see if uuid exists and has not expired
+		$user_id = $this->db->get('users','id', ['password_reset'=>$vars['pass_uuid'], 'password_reset_expires[>=]' => date('Y-m-d H:i:s')]);
 		if(!$user_id) {
-			// user not found, 400 it
+			// user not found or token expired, 400 it
 			$this->return_code(400);
 		}
 		else {
 			// found user so lets set password, wipte password hash and move on in life
 			$password = password_hash($_POST["password"], PASSWORD_DEFAULT, ['cost' => 12]);
 
-			if(!$this->db->update("users",["is_active" => 1, "password" => $password, "password_reset" => ''], ["id" => $user_id])) {
+			if(!$this->db->update("users",["is_active" => 1, "password" => $password, "password_reset" => '', "password_reset_expires" => null], ["id" => $user_id])) {
 				// create user failed
 				$this->templates->addData(['messages' => $this->get_messages()], ['app::basic']);
 			    $this->reset_password_page($vars);
