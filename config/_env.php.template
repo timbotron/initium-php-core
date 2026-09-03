@@ -21,3 +21,11 @@ define('LOGIN_TIMEOUT', 336); // hours, 336 = 2 weeks
 // to anyone with users.is_admin = 1), a config-only way to bootstrap the first
 // admin without touching the database. Leave undefined to rely on the flag only.
 // define('ADMIN_EMAIL', 'you@example.com');
+
+// Optional. Set to true ONLY when the app runs behind a trusted reverse proxy
+// (e.g. the shipped Caddy stack) that sets X-Forwarded-For / X-Forwarded-Proto.
+// It makes the login throttle key on the real client IP instead of the proxy's,
+// and lets the session cookie be marked Secure behind TLS-terminating proxies.
+// Assumes exactly one trusted proxy directly in front. Leave off for direct
+// (non-proxied) deployments — the forwarded headers are client-spoofable there.
+// define('TRUST_FORWARDED', true);

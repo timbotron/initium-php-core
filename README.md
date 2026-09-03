@@ -52,6 +52,7 @@ Optional:
 | `LOGIN_THROTTLE_MAX` | Failed logins allowed per IP within the window before blocking. Defaults to `10`. |
 | `LOGIN_THROTTLE_WINDOW` | Throttle window length in minutes. Defaults to `15`. |
 | `ADMIN_EMAIL` | A logged-in user whose email matches becomes an admin (see Admin area). Bootstraps the first admin with no DB change. |
+| `TRUST_FORWARDED` | Set truthy **only** behind a trusted reverse proxy (e.g. the Caddy stack). The login throttle then keys on the real client IP from `X-Forwarded-For` (right-most hop) instead of the proxy's address. Assumes one proxy directly in front; leave off for direct deployments (the header is client-spoofable there). |
 
 `ALLOW_SIGNUPS` is the *initial* value for the runtime `allow_signups` setting; once
 an admin saves settings, the DB value wins (see Admin area).

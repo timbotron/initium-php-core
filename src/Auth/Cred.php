@@ -3,6 +3,7 @@
 namespace Initium\Auth;
 
 use Initium\Base;
+use Initium\Request;
 
 class Cred extends Base {
 
@@ -24,7 +25,7 @@ class Cred extends Base {
 
 		if($user && password_verify($password, $user['password'])) {
 			// login good. Clear this IP's failed-attempt history and record login time
-			$this->db->delete('login_attempts', ['ip' => $this->client_ip()]);
+			$this->db->delete('login_attempts', ['ip' => Request::clientIp()]);
 			$this->db->update('users', ['last_login' => date('Y-m-d H:i:s')], ['id' => $user['id']]);
 
 			// Regenerate the id at the privilege boundary to
@@ -71,10 +72,10 @@ class Cred extends Base {
 	// with sane defaults, so existing configs need no changes:
 	//   LOGIN_THROTTLE_MAX    - failures allowed per IP in the window (default 10)
 	//   LOGIN_THROTTLE_WINDOW - window length in minutes (default 15)
-
-	private function client_ip(): string {
-		return $_SERVER['REMOTE_ADDR'] ?? '';
-	}
+	//
+	// The client IP comes from Initium\Request, which honors the trusted proxy's
+	// forwarded header when TRUST_FORWARDED is set (otherwise every request behind
+	// a proxy shares REMOTE_ADDR and the throttle self-DoSes or is bypassed).
 
 	// True once this IP has too many recent failures. Check before verifying
 	// credentials so a blocked client is refused early.
@@ -84,7 +85,7 @@ class Cred extends Base {
 		$since = date('Y-m-d H:i:s', time() - $window * 60);
 
 		return $this->db->count('login_attempts', [
-			'ip' => $this->client_ip(),
+			'ip' => Request::clientIp(),
 			'created_at[>=]' => $since,
 		]) >= $max;
 	}
@@ -92,7 +93,7 @@ class Cred extends Base {
 	// Record a failed attempt for this IP (email kept for auditing only).
 	public function record_failed_login(string $email): void {
 		$this->db->insert('login_attempts', [
-			'ip' => $this->client_ip(),
+			'ip' => Request::clientIp(),
 			'email' => $email,
 			'created_at' => date('Y-m-d H:i:s'),
 		]);
