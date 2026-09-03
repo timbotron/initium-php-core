@@ -36,6 +36,14 @@ class Settings extends Base {
     }
 
     public function require_valid_email(): bool {
+        // No-email signup (this toggle off) is enumerable by design: it must show
+        // a new user their set-password link on screen, which reveals whether the
+        // account already existed. So it is only honored on installs that opt in
+        // with the NO_EMAIL_SIGNUP config constant; without it, email verification
+        // is always required regardless of the stored admin setting.
+        if(!(defined('NO_EMAIL_SIGNUP') && NO_EMAIL_SIGNUP)) {
+            return true;
+        }
         return (bool) (int) $this->get('require_valid_email', '1');
     }
 }

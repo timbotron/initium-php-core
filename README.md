@@ -54,6 +54,7 @@ Optional:
 | `ADMIN_EMAIL` | A logged-in user whose email matches becomes an admin (see Admin area). Bootstraps the first admin with no DB change. |
 | `TRUST_FORWARDED` | Set truthy **only** behind a trusted reverse proxy (e.g. the Caddy stack). The login throttle then keys on the real client IP from `X-Forwarded-For` (right-most hop) instead of the proxy's address, and the session cookie's `Secure` flag honors `X-Forwarded-Proto`. Assumes one proxy directly in front; leave off for direct deployments (the headers are client-spoofable there). |
 | `FORCE_SECURE_COOKIES` | Force the session cookie's `Secure` flag on unconditionally. Use for installs always behind TLS where neither `$_SERVER['HTTPS']` nor a trusted `X-Forwarded-Proto` is reliably set. Leave off for local HTTP dev. |
+| `NO_EMAIL_SIGNUP` | Permit no-email signup (lets the admin *require valid email* toggle be turned off, so new users go straight to the set-password page with no Mailgun). **Enumerable by design** — it must show a new user their set-password link on screen, revealing whether an account existed. Enable **only** on trusted/internal installs; without it the toggle is locked on and email verification is always required. |
 
 `ALLOW_SIGNUPS` is the *initial* value for the runtime `allow_signups` setting; once
 an admin saves settings, the DB value wins (see Admin area).
@@ -122,7 +123,10 @@ It exposes two runtime toggles, stored in the `settings` key/value table
 - **Require valid email** — on (default): sign-ups are emailed a set-password
   link via Mailgun. Off: the email round-trip is skipped and new users are sent
   straight to the set-password page — for installs without Mailgun. (An existing
-  *active* account is never redirected to reset from the signup form.)
+  *active* account is never redirected to reset from the signup form.) This
+  toggle is **locked on** unless the install sets the `NO_EMAIL_SIGNUP` constant,
+  because the no-email path is enumerable by design (see the config table) — turn
+  it off only on trusted/internal installs.
 
 Reads fall back to code defaults when no row exists, so behavior is unchanged
 until an admin saves. Access is gated by `Cred::isAdmin()`: true when the

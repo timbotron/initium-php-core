@@ -50,7 +50,13 @@ class Controller extends Base {
 
 		// unchecked checkboxes are absent from POST
 		$this->settings->set('allow_signups', isset($_POST['allow_signups']) ? '1' : '0');
-		$this->settings->set('require_valid_email', isset($_POST['require_valid_email']) ? '1' : '0');
+
+		// The email toggle is only editable where no-email mode is permitted;
+		// otherwise it is locked on (see Settings::require_valid_email) and the
+		// disabled checkbox never posts, so don't clobber the stored value.
+		if(defined('NO_EMAIL_SIGNUP') && NO_EMAIL_SIGNUP) {
+			$this->settings->set('require_valid_email', isset($_POST['require_valid_email']) ? '1' : '0');
+		}
 
 		$this->add_message('info', 'Settings saved.');
 		$this->render_settings();
@@ -62,6 +68,7 @@ class Controller extends Base {
 		$this->templates->addData([
 			'allow_signups' => $this->settings->allow_signups(),
 			'require_valid_email' => $this->settings->require_valid_email(),
+			'no_email_allowed' => defined('NO_EMAIL_SIGNUP') && NO_EMAIL_SIGNUP,
 		], ['app::admin_settings']);
 		echo $this->templates->render('app::admin_settings');
 	}

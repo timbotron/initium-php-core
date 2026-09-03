@@ -15,11 +15,15 @@
     </p>
     <p>
         <label>
-            <input type="checkbox" name="require_valid_email" value="1" <?= $require_valid_email ? 'checked' : '' ?>>
+            <input type="checkbox" name="require_valid_email" value="1" <?= $require_valid_email ? 'checked' : '' ?> <?= ($no_email_allowed ?? false) ? '' : 'disabled' ?>>
             Require valid email
         </label>
         <br>
         <small>On: sign-ups are emailed a set-password link (needs Mailgun). Off: new users skip email and go straight to the set-password page &mdash; use this for installs without Mailgun.</small>
+        <?php if(!($no_email_allowed ?? false)): ?>
+        <br>
+        <small><strong>Locked on.</strong> No-email sign-up reveals whether an account exists, so it must be explicitly enabled with <code>NO_EMAIL_SIGNUP</code> in config before it can be turned off here.</small>
+        <?php endif; ?>
     </p>
     <button type="submit">Save</button>
 </form>

@@ -34,3 +34,11 @@ define('LOGIN_TIMEOUT', 336); // hours, 336 = 2 weeks
 // installs always served over HTTPS where neither $_SERVER['HTTPS'] nor a
 // trusted X-Forwarded-Proto is reliably set. Leave off for local HTTP dev.
 // define('FORCE_SECURE_COOKIES', true);
+
+// Optional. Permit no-email signup (the admin "require valid email" toggle can
+// then be turned off, sending new users straight to the set-password page with
+// no Mailgun round-trip). This mode is ENUMERABLE BY DESIGN: it must show a new
+// user their set-password link on screen, which reveals whether an account
+// already existed. Enable ONLY on trusted/internal installs. Without this
+// constant the toggle is locked on and email verification is always required.
+// define('NO_EMAIL_SIGNUP', true);
