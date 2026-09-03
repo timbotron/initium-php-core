@@ -45,6 +45,7 @@ class Controller extends Base {
 	}
 
 	public function settings_save() {
+		$this->verify_csrf();
 		$this->require_admin();
 
 		// unchecked checkboxes are absent from POST

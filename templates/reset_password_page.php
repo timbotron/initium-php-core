@@ -6,6 +6,7 @@
 <h3>Change Password</h3>
 
 <form action="/password-reset/<?= $uuid;?>" method="POST">
+        <?= $this->csrf_field() ?>
         <label for="password">Password:</label>
         <input type="password" id="password" name="password" required>
         <label for="password2">Repeat Password:</label>

@@ -35,6 +35,9 @@ class View {
             : $coreDir;
         $engine->addFolder('app', $appDir, true); // fallback -> core default dir
 
+        // Templates emit the CSRF hidden input by calling $this->csrf_field().
+        $engine->registerFunction('csrf_field', fn () => Csrf::field());
+
         return $engine;
     }
 }

@@ -6,6 +6,7 @@
 <h3>Admin settings</h3>
 
 <form method="post" action="<?= SITE_URL ?>admin">
+    <?= $this->csrf_field() ?>
     <p>
         <label>
             <input type="checkbox" name="allow_signups" value="1" <?= $allow_signups ? 'checked' : '' ?>>

@@ -6,6 +6,7 @@
 <h3>Login</h3>
 
 <form action="/login" method="POST">
+        <?= $this->csrf_field() ?>
         <label for="email">Email Address:</label>
         <input type="email" id="email" name="email" value="<?= $this->e($post_content['email'] ?? '') ?>" required>
         <label for="password">Password:</label>

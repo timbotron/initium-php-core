@@ -81,6 +81,8 @@ class Controller extends Base {
 	}
 
 	public function login() {
+		$this->verify_csrf();
+
 		$cred = new Cred();
 
 		// Brute-force throttle: refuse early (before any credential work) once
@@ -149,6 +151,8 @@ class Controller extends Base {
 	}
 
 	public function create_account() {
+		$this->verify_csrf();
+
 		if(!(new Settings())->allow_signups()) {
 			$this->return_code(404);
 		}
@@ -226,6 +230,8 @@ class Controller extends Base {
 	}
 
 	public function forgot_password() {
+		$this->verify_csrf();
+
 		// validate
 
 		$v = new \Valitron\Validator($_POST);
@@ -285,6 +291,8 @@ class Controller extends Base {
 	}
 
 	public function reset_password($vars) {
+		$this->verify_csrf();
+
 		if(!$this->isUUID($vars['pass_uuid'])) {
 			// is not a UUID
 			$this->return_code(400);

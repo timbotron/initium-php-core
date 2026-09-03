@@ -8,6 +8,7 @@
 <p>Enter your email address. We will send you an email verifying your address, and provide a link to set your password.</p>
 
 <form action="/create-account" method="POST">
+        <?= $this->csrf_field() ?>
         <label for="email">Email Address:</label>
         <input type="email" id="email" name="email" value="<?= $this->e($post_content['email'] ?? '') ?>" required>
         <label for="email">Repeat Email Address:</label>

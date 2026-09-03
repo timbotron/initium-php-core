@@ -35,6 +35,14 @@ class Base {
         die;
     }
 
+    // Fail the request closed (400) unless the POST carries a valid CSRF token.
+    // Call at the top of every state-changing POST handler, before any work.
+    protected function verify_csrf(): void {
+        if(!Csrf::verify()) {
+            $this->return_code(400);
+        }
+    }
+
     protected function isUUID($uuid): bool {
         $regex = '/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/';
         return preg_match($regex, $uuid) === 1;
