@@ -20,8 +20,8 @@ class Email {
 	    curl_setopt($curl, CURLOPT_USERPWD, "api:{$config['api_key']}");
 	    curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
 	    curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 10);
-	    curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, 0);
-	    curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 0);
+	    curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, 1);
+	    curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 2);
 	    curl_setopt($curl, CURLOPT_POSTFIELDS, $message);
 	    return curl_exec($curl);
 	}
