@@ -100,7 +100,7 @@ class Kernel
             'path' => '/',
             'httponly' => true,
             'samesite' => 'Lax',
-            'secure' => !empty($_SERVER['HTTPS']),
+            'secure' => Request::isSecure(),
         ];
         session_set_cookie_params(['lifetime' => $lifetime] + $cookieBase);
         session_start();

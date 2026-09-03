@@ -36,4 +36,20 @@ class Request {
         }
         return $_SERVER['REMOTE_ADDR'] ?? '';
     }
+
+    // Is the original request HTTPS? True on direct TLS, on a forced override, or
+    // when the trusted proxy reports X-Forwarded-Proto: https. Drives the session
+    // cookie's Secure flag, which otherwise stays off behind a TLS-terminating
+    // proxy (where $_SERVER['HTTPS'] is unset).
+    public static function isSecure(): bool {
+        if(defined('FORCE_SECURE_COOKIES') && FORCE_SECURE_COOKIES) {
+            return true;
+        }
+        if(!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off') {
+            return true;
+        }
+        return self::trustForwarded()
+            && isset($_SERVER['HTTP_X_FORWARDED_PROTO'])
+            && strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https';
+    }
 }

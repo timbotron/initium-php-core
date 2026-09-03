@@ -29,3 +29,8 @@ define('LOGIN_TIMEOUT', 336); // hours, 336 = 2 weeks
 // Assumes exactly one trusted proxy directly in front. Leave off for direct
 // (non-proxied) deployments — the forwarded headers are client-spoofable there.
 // define('TRUST_FORWARDED', true);
+
+// Optional. Force the session cookie's Secure flag on unconditionally. Use for
+// installs always served over HTTPS where neither $_SERVER['HTTPS'] nor a
+// trusted X-Forwarded-Proto is reliably set. Leave off for local HTTP dev.
+// define('FORCE_SECURE_COOKIES', true);
